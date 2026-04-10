@@ -60,6 +60,7 @@ def validate_decision_dict(data: dict[str, Any]) -> RoutingDecision:
         raise ValueError('notes must be a list of strings')
 
     targets: list[RouteTarget] = []
+    seen_targets: set[tuple[str, str, str]] = set()
     for idx, item in enumerate(create):
         if not isinstance(item, dict):
             raise ValueError(f'create[{idx}] must be an object')
@@ -79,7 +80,12 @@ def validate_decision_dict(data: dict[str, Any]) -> RoutingDecision:
             raise ValueError(f'Invalid slug in create[{idx}]')
         if not isinstance(reason, str) or not reason.strip():
             raise ValueError(f'Invalid reason in create[{idx}]')
-        targets.append(RouteTarget(plane=plane, bucket=bucket, slug=slug.strip(), reason=reason.strip()))
+        normalized_slug = slug.strip()
+        dedupe_key = (plane, bucket, normalized_slug)
+        if dedupe_key in seen_targets:
+            raise ValueError(f'Duplicate target in create[{idx}]: {plane}/{bucket}/{normalized_slug}')
+        seen_targets.add(dedupe_key)
+        targets.append(RouteTarget(plane=plane, bucket=bucket, slug=normalized_slug, reason=reason.strip()))
 
     return RoutingDecision(
         confidence=confidence,

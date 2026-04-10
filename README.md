@@ -259,3 +259,5 @@ python3 scripts/router_benchmark.py /path/to/wiki references/router-benchmark-ca
 ```
 
 This reports whether the router hits required target families like `mind/projects` or `world/concepts`, and whether it over-creates outside the allowed set for each case.
+
+A comparison report from local testing is available in `reports/router-benchmark-comparison-2026-04-10.md`.
