@@ -1,4 +1,4 @@
-# create-agent-first-wiki
+# agent-first-wiki-starter
 
 A reusable starter kit for building a local-first, agent-operated wiki with LLM-based routing.
 
