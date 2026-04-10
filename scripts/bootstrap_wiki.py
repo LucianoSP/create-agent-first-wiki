@@ -129,6 +129,15 @@ def count_json(path: Path) -> int:
     return sum(1 for p in path.rglob('*.json') if p.is_file()) if path.exists() else 0
 
 
+def count_pending_raw_entries(path: Path) -> int:
+    total = 0
+    for p in path.glob('*.md'):
+        text = p.read_text(encoding='utf-8', errors='replace')
+        if '\nstatus: pending\n' in text or text.startswith('---\nstatus: pending\n'):
+            total += 1
+    return total
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print('Usage: python3 status.py /absolute/path/to/wiki', file=sys.stderr)
@@ -140,6 +149,7 @@ def main() -> int:
     data = {
         'root': str(root),
         'raw_entries': count_md(root / 'raw' / 'entries'),
+        'pending_raw_entries': count_pending_raw_entries(root / 'raw' / 'entries'),
         'mind_pages': count_md(root / 'mind'),
         'world_pages': count_md(root / 'world'),
         'manual_review_entries': count_md(root / 'inbox' / 'manual-review'),

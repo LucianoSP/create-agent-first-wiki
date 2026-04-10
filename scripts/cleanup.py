@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 LINK_RE = re.compile(r'\[\[([^\]]+)\]\]')
+STATUS_RE = re.compile(r'(?m)^status:\s*([^\n]+)$')
 
 
 def now_iso() -> str:
@@ -26,6 +27,18 @@ def collect_pages(root: Path) -> list[Path]:
 
 def has_frontmatter(text: str) -> bool:
     return text.startswith('---\n') and '\n---\n' in text
+
+
+def count_raw_entries_by_status(root: Path) -> tuple[int, int]:
+    total = 0
+    pending = 0
+    for path in (root / 'raw' / 'entries').glob('*.md'):
+        total += 1
+        text = path.read_text(encoding='utf-8', errors='replace')
+        match = STATUS_RE.search(text)
+        if match and match.group(1).strip() == 'pending':
+            pending += 1
+    return total, pending
 
 
 def main() -> int:
@@ -60,7 +73,7 @@ def main() -> int:
         if valid_outbound == 0:
             orphans.append(rel)
 
-    pending = len(list((root / 'raw' / 'entries').glob('*.md')))
+    total_raw_entries, pending = count_raw_entries_by_status(root)
     manual_review = len(list((root / 'inbox' / 'manual-review').glob('*.md')))
     failed = len(list((root / 'inbox' / 'failed').glob('*.md')))
     router_errors = len(list((root / 'meta' / 'ROUTER' / 'errors').glob('*.json')))
@@ -73,6 +86,7 @@ def main() -> int:
         'oversized_pages': oversized,
         'orphans': sorted(orphan for orphan, count in inbound.items() if count == 0 and orphan in orphans),
         'queues': {
+            'total_raw_entries': total_raw_entries,
             'pending_raw_entries': pending,
             'manual_review_entries': manual_review,
             'failed_entries': failed,
@@ -89,6 +103,7 @@ def main() -> int:
         f'- pages_scanned: {report["pages_scanned"]}',
         '',
         '## Queues',
+        f'- total_raw_entries: {total_raw_entries}',
         f'- pending_raw_entries: {pending}',
         f'- manual_review_entries: {manual_review}',
         f'- failed_entries: {failed}',
